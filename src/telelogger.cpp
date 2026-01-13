@@ -18,6 +18,8 @@
 #include <FreematicsPlus.h>
 #include <httpd.h>
 #include "config.h"
+#include "ABRP.h"
+#include "SD-config.h"
 #include "telestore.h"
 #include "teleclient.h"
 #include "telemesh.h"
@@ -162,6 +164,9 @@ OLED_SH1106 oled;
 #endif
 
 State state;
+AbrpManager abrp;
+AbrpConfig abrpConfig;
+bool abrpConfigLoaded = false;
 
 void printTimeoutStats()
 {
@@ -318,7 +323,7 @@ bool processGPS(CBuffer* buffer)
 
   if (!gd || lastGPStime == gd->time || (gd->lng == 0 && gd->lat == 0)) return false;
 
-  if ((lastGPSLat || lastGPSLng) && (abs(gd->lat - lastGPSLat) > 0.001 || abs(gd->lng - lastGPSLng > 0.001))) {
+  if ((lastGPSLat || lastGPSLng) && (abs(gd->lat - lastGPSLat) > 0.001 || abs(gd->lng - lastGPSLng) > 0.001)) {
     // invalid coordinates data
     lastGPSLat = 0;
     lastGPSLng = 0;
@@ -547,6 +552,17 @@ void initialize()
   }
 #endif
 
+  if (!abrpConfigLoaded) {
+    loadAbrpConfig(abrpConfig);
+    abrp.begin(abrpConfig);
+    abrpConfigLoaded = true;
+  }
+#if STORAGE != STORAGE_NONE
+  if (state.check(STATE_STORAGE_READY)) {
+    abrp.setStorageReady(fileid);
+  }
+#endif
+
   // re-try OBD if connection not established
 #if ENABLE_OBD
   if (state.check(STATE_OBD_READY)) {
@@ -709,6 +725,10 @@ void process()
 #endif
 
   processGPS(buffer);
+  abrp.updateUtc();
+  abrp.updateGps(gd);
+  abrp.pollUds(startTime);
+  abrp.logJson(startTime);
 
   if (!state.check(STATE_MEMS_READY)) {
     deviceTemp = readChipTemperature();

@@ -1,6 +1,8 @@
 #ifndef CONFIG_H_INCLUDED
 #define CONFIG_H_INCLUDED
 
+#include "driver/gpio.h"
+
 #ifdef CONFIG_ENABLE_OBD
 #define ENABLE_OBD CONFIG_ENABLE_OBD
 #endif
@@ -78,6 +80,16 @@
 
 // maximum consecutive OBD access errors before entering standby
 #define MAX_OBD_ERRORS 3
+
+/**************************************
+* CAN/UDS configurations
+**************************************/
+#ifndef CAN_TX_PIN
+#define CAN_TX_PIN GPIO_NUM_5
+#endif
+#ifndef CAN_RX_PIN
+#define CAN_RX_PIN GPIO_NUM_4
+#endif
 
 /**************************************
 * Networking configurations
