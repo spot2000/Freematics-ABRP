@@ -36,7 +36,7 @@ public:
     void uninit()
     {
         if (m_cache) {
-            delete m_cache;
+            free(m_cache);
             m_cache = 0;
             m_cacheSize = 0;
         }
